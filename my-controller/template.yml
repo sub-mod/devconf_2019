@@ -1,0 +1,117 @@
+---
+apiVersion: v1
+kind: Template
+labels:
+  template: my-controller
+metadata:
+  annotations: 
+  name: my-controller
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: "${APPLICATION_NAME}"
+    name: "${APPLICATION_NAME}"
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      template: "${APPLICATION_NAME}"
+    name: "${APPLICATION_NAME}"
+  spec:
+    replicas: 1
+    selector:
+      app: "${APPLICATION_NAME}"
+      deploymentconfig: "${APPLICATION_NAME}"
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations: 
+        labels:
+          app: "${APPLICATION_NAME}"
+          deploymentconfig: "${APPLICATION_NAME}"
+      spec:
+        volumes:
+        - name: config-volume
+          configMap:
+            name: "${APPLICATION_NAME}"
+        containers:
+        - env:
+          - name: CONFIG_FILE
+            value: "/etc/config/config.ini"
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: MY_POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          image: submod/my-controller:latest
+          command:
+          - python3.6
+          - "/opt/my-controller/watch.py"
+          - INSIDE_POD
+          imagePullPolicy: Always
+          name: "${APPLICATION_NAME}"
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: "/dev/termination-log"
+          volumeMounts:
+          - name: config-volume
+            mountPath: "/etc/config"
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        serviceAccountName: "${APPLICATION_NAME}"
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+- apiVersion: v1
+  data:
+    config.ini: |
+      [global]
+      k8s_resource=routes
+      watcher_plugin=simple
+
+      [plugin_simple]
+  kind: ConfigMap
+  metadata:
+    name: "${APPLICATION_NAME}"
+  labels:
+    template: "${APPLICATION_NAME}"
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    labels:
+      template: "${APPLICATION_NAME}"
+    name: "${APPLICATION_NAME}"
+- apiVersion: v1
+  groupNames: 
+  kind: RoleBinding
+  metadata:
+    labels:
+      template: "${APPLICATION_NAME}"
+    name: "${APPLICATION_NAME}_edit"
+  roleRef:
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: "${APPLICATION_NAME}"
+parameters:
+- description: The name for the application.
+  name: APPLICATION_NAME
+  required: true
+  value: my-controller
