@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    getambassador.io/config: |-
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name: tfserving-predict-mapping-inference
+      prefix: /tfserving/models/default
+      rewrite: /v1/models/default:predict
+      method: POST
+      service: inference-service.kubeflow:8500
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name: tfserving-predict-mapping-inference-get
+      prefix: /tfserving/models/default
+      rewrite: /v1/models/default
+      method: GET
+      service: inference-service.kubeflow:8500
+    prometheus.io/path: /monitoring/prometheus/metrics
+    prometheus.io/port: "8500"
+    prometheus.io/scrape: "true"
+  labels:
+    app: $(svcName)
+  name: $(svcName)
+  namespace: kubeflow
+spec:
+  ports:
+  - name: grpc-tf-serving
+    port: 9000
+    targetPort: 9000
+  - name: http-tf-serving
+    port: 8500
+    targetPort: 8500
+  selector:
+    app: inference-server
+    appName: $(svcName)
+  type: ClusterIP

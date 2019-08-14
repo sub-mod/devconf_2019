@@ -1,0 +1,53 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: inference-server
+    appName: $(svcName)
+  name: $(svcName)
+  namespace: kubeflow
+spec:
+  template:
+    metadata:
+      labels:
+        app: inference-server
+        appName: $(svcName)
+        version: v1
+    spec:
+      containers:
+      - args:
+        - --port=9000
+        - --rest_api_port=8500
+        - --model_name=$(modelName)
+        - --model_base_path=$(modelBasePath)
+        command:
+        - /usr/bin/tensorflow_model_server
+        env:
+        - name: modelBasePath
+          value: $(modelBasePath)        
+        image: $(servingImage)
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          tcpSocket:
+            port: 9000
+        name: $(svcName)
+        ports:
+        - containerPort: 9000
+        - containerPort: 8500
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 1Gi
+        volumeMounts:
+        - mountPath: $(pvcMountPath)
+          name: local-storage
+      volumes:
+      - name: local-storage
+        persistentVolumeClaim:
+          claimName: $(pvcName)
+

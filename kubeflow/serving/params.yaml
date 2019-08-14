@@ -1,0 +1,20 @@
+varReference:
+- path: metadata/name
+  kind: Deployment
+- path: spec/template/spec/volumes/persistentVolumeClaim/claimName
+  kind: Deployment
+- path: spec/template/metadata/labels
+  kind: Deployment
+- path: spec/template/spec/containers/env/value
+  kind: Deployment
+- path: spec/template/spec/containers/name
+  kind: Deployment
+- path: spec/template/spec/containers/image
+  kind: Deployment
+
+- path: metadata/name
+  kind: Service
+- path: metadata/annotations/
+  kind: Service
+- path: spec/selector
+  kind: Service
