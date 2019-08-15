@@ -66,9 +66,9 @@
                       {
                          "env": [
                             {
-                               "name": "CONFIG_FILE",
-                               "value": "/etc/config/config.ini"
-                            },
+                              "name": "FILE_NAME",
+                              "value": "${FILE_NAME}"
+                           },
                             {
                               "name": "MY_POD_NAME",
                               "valueFrom": {
@@ -87,7 +87,7 @@
                            }
                          ],
                          "image": "submod/my-controller:latest",
-                         "command": ["python3.6", "/opt/my-controller/watch.py", "INSIDE_POD"],
+                         "command": ["/opt/my-controller/bin/start.sh"],
                          "imagePullPolicy": "Always",
                          "name": "${APPLICATION_NAME}",
                          "ports": [
@@ -171,6 +171,12 @@
           "name": "APPLICATION_NAME",
           "required": true,
           "value": "my-controller"
-       }
+       },
+       {
+         "description": "pod_watch.py| crd_watch.py| all_pods.py",
+         "name": "FILE_NAME",
+         "required": true,
+         "value": "pod_watch.py"
+      }
     ]
  }
